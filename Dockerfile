@@ -1,25 +1,26 @@
-# 使用官方的 Node 镜像作为基础镜像
-FROM node:16.15.1
+# 使用官方Python运行时作为父镜像
+FROM python:3.12.4-slim
 
 # 设置工作目录
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# 将本地的 Vite 项目文件复制到工作目录
-COPY . .
+# 复制当前目录的内容到容器的/app中
+COPY . /app
 
+# 设置pip源
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 # 安装依赖
-RUN npm install
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir --verbose --user -r requirements.txt
 
-# 执行 Vite 构建命令，生成 dist 目录
-RUN npm run build
+# 设置环境变量
+ENV DJANGO_SETTINGS_MODULE=RainBow.settings
 
-# 使用 Nginx 镜像作为运行时镜像
-FROM nginx:latest
+# 创建数据库文件
+RUN touch /app/db.sqlite3
 
-# 将 Vite 项目的 dist 目录复制到 Nginx 的默认静态文件目录
-COPY --from=0 /usr/src/app/dist /usr/share/nginx/html
+# 运行迁移
+RUN python manage.py migrate
 
-# 暴露容器的 80 端口
-EXPOSE 80
-
-# Nginx 会在容器启动时自动运行，无需手动设置 CMD
+# 启动Django服务
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
