@@ -1,1 +1,2 @@
-# Backend of brainbow.top
+# BRain
+Backend of brainbow.top
